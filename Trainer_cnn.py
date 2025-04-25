@@ -1,11 +1,12 @@
 import pygame
 import torch
 from environment import Game
-from DQN_Agent import DQN_Agent
+from DQN_Agent_CNN import DQN_Agent
 import graphics
 import os
 from ReplayBuffer import ReplayBuffer
 import wandb
+
 WIDTH , HEIGHT = 540,710
 def main (chkpt):
 
@@ -20,12 +21,13 @@ def main (chkpt):
     best_score = 0
 
     #region ###### params ############
-    player = DQN_Agent(path)
+    game = Game()
+    player = DQN_Agent(path, env=game)
     # player.load_params(path)
     # player.save_param(path)
-    player_hat = DQN_Agent()
+    player_hat = DQN_Agent(env=game)
     player_hat.DQN = player.DQN.copy()
-    batch_size = 500
+    batch_size = 32
     buffer = ReplayBuffer()
     learning_rate = 0.001
     epochs = 1000
@@ -77,8 +79,8 @@ def main (chkpt):
     #endregion################################
 
     for epoch in range(start_epoch, epochs):
-        game = Game()
-        state = game.state()
+        game.reset()
+        state_cnn = game.state_cnn()
         gameTick=0
         run = True
         steps=0
@@ -92,18 +94,19 @@ def main (chkpt):
             ############## Sample Environement #########################
             if gameTick%6==0:
                 step+=1
-                action = player.getAction(state=state, epoch=epoch,train=True)
+                action, state_cnn = player.getAction(state_cnn=state_cnn, epoch=epoch,train=True)
                 graphics.Graphics.game_screen(screen,game)
-                gameTick,nextState,reward=game.tick(gameTick,action)
-                buffer.push(state, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
+                gameTick,nextState,reward=game.tick(gameTick, action)
+                buffer.push(state_cnn, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
                             nextState, torch.tensor(game.game_over!=False, dtype=torch.float32))
             else:
-                gameTick,midState,_=game.tick(gameTick,action)
+                gameTick,midState_cnn,_=game.tick(gameTick,action)
                 graphics.Graphics.game_screen(screen,game)
 
             if game.game_over or step > 200:
                 best_score = max(best_score, game.points)
-                buffer.push(state, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), midState, torch.tensor(game.game_over!=False, dtype=torch.float32))
+                buffer.push(state, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
+                            midState_cnn, torch.tensor(game.game_over!=False, dtype=torch.float32))
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
                 break
@@ -117,9 +120,11 @@ def main (chkpt):
     
             ############## Train ################
             if gameTick%6==0:
-                states, actions, rewards, next_states, dones = buffer.sample(batch_size)
-                Q_values = player.getActionValues(states)
-                Q_hat_Values = player_hat.getActionValues(next_states).detach()   # wrong need to find a'
+                states_cnn, actions, rewards, next_states, dones = buffer.sample(batch_size)
+                Q_values = player.get_Q_values(states_cnn)
+                
+                Q_hat_Values = player_hat.get_Action_Values(next_states)   
+                
                 loss = player.DQN.loss(Q_values, rewards, Q_hat_Values, dones)
 
                 loss.backward()

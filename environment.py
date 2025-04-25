@@ -50,6 +50,7 @@ class Game:
         self.waveTime=0
         self.frightenedTime=0
         self.game_over = False
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     def move(self):
         if 11 in self.board:
@@ -90,7 +91,6 @@ class Game:
                     self.ghostModes=[2,2,2,2]
                     self.frightenedTime=0
                 self.board[nextPos[0]][nextPos[1]]=11
-            
                 
     def ghostModeUpdate(self):
         if self.waveCounter%2==0:
@@ -125,8 +125,10 @@ class Game:
                 for i in range(min(2+int(self.points/300),4)):
                     if self.ghostModes[i] ==2:
                         self.ghostModes[i]=mode
-                        x,y=np.argwhere(self.board==i-10)[0]
-                        self.board[x][y]=self.board[x][y]*-1
+                        coords = np.argwhere(self.board == i - 10)
+                        if coords.size > 0:
+                            x,y=np.argwhere(self.board==i-10)[0]
+                            self.board[x][y]=self.board[x][y]*-1
     
     def ghostMove(self,ghost):
         if ghost <4-int(self.points<300)-int(self.points<600):
@@ -174,6 +176,7 @@ class Game:
                 self.board[nextPos[0]][nextPos[1]] = 10-ghost
             self.ghostMove(ghost+1)
             return True
+
     def blueGhostMove(self,ghost):
         if ghost <4-int(self.points<300)-int(self.points<600):
             if ghost-10 not in self.board:
@@ -213,6 +216,7 @@ class Game:
             self.board[nextPos[0]][nextPos[1]] = ghost-10
             self.blueGhostMove(ghost+1)
             return True
+
     def determineTargetTile(self,ghost):
         coords = np.argwhere(abs(self.board)==10-ghost)[0]
         if (coords[0] >=13 and coords[0]<=15) and coords[1]>10 and coords[1]<16:
@@ -255,6 +259,7 @@ class Game:
                     self.ghostTargetTiles[3]= pacman
                 else:
                     self.ghostTargetTiles[3]=self.ghostHomeTiles[3]
+
     def respawnGhost(self,ghost,pos):
         self.board[13,14] = 10-ghost
         self.points+=200
@@ -265,13 +270,17 @@ class Game:
             self.ghostModes[ghost]=0
         self.board[pos]=self.ghostUnder[ghost]
         self.ghostUnder[ghost]=0
+
     def gameOver(self):
         print("GAME OVER")
         self.game_over="lose"
+
     def win(self):
         self.game_over="win"
+
     def getLegalActions(self):
         return [0,1,2,3]
+
     def tick(self,GameTick,action):
         if not self.game_over:
             prevPoints = self.points
@@ -291,8 +300,9 @@ class Game:
                 self.ghostModeUpdate()
             
             reward=(self.points-prevPoints)/10
-            return GameTick+1,self.state(),reward
+            return GameTick+1,self.state_cnn(),reward        ##################
         return GameTick
+
     def state(self):
         board_np = self.board.reshape(868) # 31 * 28
         p_dir = self.direction
@@ -302,7 +312,112 @@ class Game:
         state=np.concatenate([board_np,directions])
         return torch.tensor(state,dtype=torch.float32)
         
+    def state_cnn(self):
+        board = np.zeros_like(self.board)
+        board[self.board==5] = 3  # ball 5 -> 3
+        board[self.board==1] = 2  # food 1 -> 2
+        board[self.board==0] = 1  # empty 0 -> 1
+        board[(self.board==-1) | (self.board==-2)] = 0  # wall -1, -2 -> 0
 
+        pacman = np.zeros_like(self.board)
+        pacman[self.board==11] = 1
+
+        ghost_bad = np.zeros_like(self.board)
+        ghost_bad[(self.board >=7) &  (self.board <= 10) ] = 1 # add the direction - next tiel with 0.1
+        
+        ghost_eatable = np.zeros_like(self.board) 
+        ghost_eatable[(self.board>= -10) & (self.board <= -7)] = 1 # add the direction - next tiel with 0.1
+        state = np.stack([board, pacman, ghost_bad, ghost_eatable], axis=0)  
+        return torch.tensor(state, dtype=torch.float32, device=self.device)
+        
+        
+    def state_actions (self, state_cnn):
+        actions, next_pacman_lst = self.legal_actions(state_cnn)
+        batch = []
+        for next_pacman in next_pacman_lst:
+            state = torch.stack([state_cnn[0], next_pacman, state_cnn[1], state_cnn[2]], axis=0) 
+            batch.append(torch.tensor(state, dtype=torch.float32))
+        
+        batch_state = torch.stack(batch, axis=0)
+        return batch_state, actions
+
+    def legal_actions(self, state_cnn):
+        board = state_cnn[0]
+        pacman = state_cnn[1]
+        rows, cols = pacman.shape
+        row, col = torch.where(pacman == 1)
+        legal_actions = []
+        next_pacman_lst = []
+        for action in range(4):
+            if action == 0 and col + 1 < cols and board[row, col+1] != -1:
+                next_pacman = torch.zeros_like(pacman)
+                next_pacman[row, col+1] = 1
+                legal_actions.append(action)
+                next_pacman_lst.append(next_pacman)
+            elif action == 1 and row + 1 < rows and board[row+1, col] != -1:
+                next_pacman = torch.zeros_like(pacman)
+                next_pacman[row+1, col] = 1
+                legal_actions.append(action)
+                next_pacman_lst.append(next_pacman)
+            elif action == 2 and col - 1 >= 0 and board[row, col-1] != -1:
+                next_pacman = torch.zeros_like(pacman)
+                next_pacman[row, col-1] = 1
+                legal_actions.append(action)
+                next_pacman_lst.append(next_pacman)
+            elif action == 3 and row - 1 >= 0 and board[row-1, col] != -1:
+                next_pacman = torch.zeros_like(pacman)
+                next_pacman[row-1, col] = 1
+                legal_actions.append(action)
+                next_pacman_lst.append(next_pacman)
+
+        return legal_actions, next_pacman_lst
+        
+                
+    def reset (self):
+        self.ghostHomeTiles = [(1,26),(1,1),(29,26),(29,1)]
+        self.board = [[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1],
+                [-1, 1,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1, 1,-1],
+                [-1, 5,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1, 5,-1],
+                [-1, 1,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1, 1,-1],
+                [-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1],
+                [-1, 1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1, 1,-1],
+                [-1, 1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1, 1,-1],
+                [-1, 1, 1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1, 1, 1,-1],
+                [-1,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1, 0,-1,-1, 0,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1,-1],
+                [ 0, 0, 0, 0, 0,-1, 1,-1,-1,-1,-1,-1, 0,-1,-1, 0,-1,-1,-1,-1,-1, 1,-1, 0, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0,-1, 1,-1,-1, 0, 0, 0, 0, 0,10, 0, 0, 0, 0,-1,-1, 1,-1, 0, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0,-1, 1,-1,-1, 0,-1,-1,-1,-2,-2,-1,-1,-1, 0,-1,-1, 1,-1, 0, 0, 0, 0, 0],
+                [-1,-1,-1,-1,-1,-1, 1,-1,-1, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0,-1,-1, 1,-1,-1,-1,-1,-1,-1],
+                [ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,-1, 0, 7, 0, 8, 0, 9,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                [-1,-1,-1,-1,-1,-1, 1,-1,-1, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0,-1,-1, 1,-1,-1,-1,-1,-1,-1],
+                [ 0, 0, 0, 0, 0,-1, 1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1,-1, 1,-1, 0, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0,-1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1, 1,-1, 0, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0,-1, 1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1,-1, 1,-1, 0, 0, 0, 0, 0],
+                [-1,-1,-1,-1,-1,-1, 1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1,-1, 1,-1,-1,-1,-1,-1,-1],
+                [-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1],
+                [-1, 1,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1, 1,-1],
+                [-1, 1,-1,-1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1, 1,-1,-1,-1,-1, 1,-1],
+                [-1, 5, 1, 1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1,11, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1, 1, 5,-1],
+                [-1,-1,-1, 1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1, 1,-1,-1,-1],
+                [-1,-1,-1, 1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1, 1,-1,-1,-1],
+                [-1, 1, 1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1,-1,-1, 1, 1, 1, 1, 1, 1,-1],
+                [-1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1],
+                [-1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1],
+                [-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]
+        self.board = np.array(self.board,dtype=int)
+        self.direction = 0
+        self.nextDirection = 0
+        self.points = 0
+        self.ghostModes = [1,1,1,1] #0=chase 1=scatter 2=frightened
+        self.ghostDirections = [0,3,3,3]
+        self.ghostUnder = np.array([0,0,-3,0],dtype=int)
+        self.ghostTargetTiles = [(1,26),(1,1),(29,26),(29,1)]
+        self.waveCounter=0
+        self.waveTime=0
+        self.frightenedTime=0
+        self.game_over = False
     
                 
                             
