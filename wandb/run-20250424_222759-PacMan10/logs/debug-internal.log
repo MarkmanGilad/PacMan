@@ -1,9 +1,0 @@
-{"time":"2025-04-24T22:27:59.2454074+03:00","level":"INFO","msg":"using version","core version":"0.19.1"}
-{"time":"2025-04-24T22:27:59.2454074+03:00","level":"INFO","msg":"created symlink","path":"C:\\Users\\Gilad\\Markman Dropbox\\Gilad Markman\\Python\\PacMan\\PacMan\\wandb\\run-20250424_222759-PacMan10\\logs\\debug-core.log"}
-{"time":"2025-04-24T22:27:59.3759074+03:00","level":"INFO","msg":"created new stream","id":"PacMan10"}
-{"time":"2025-04-24T22:27:59.3759074+03:00","level":"INFO","msg":"stream: started","id":"PacMan10"}
-{"time":"2025-04-24T22:27:59.3759074+03:00","level":"INFO","msg":"handler: started","stream_id":"PacMan10"}
-{"time":"2025-04-24T22:27:59.3759074+03:00","level":"INFO","msg":"sender: started","stream_id":"PacMan10"}
-{"time":"2025-04-24T22:27:59.3759074+03:00","level":"INFO","msg":"writer: Do: started","stream_id":"PacMan10"}
-{"time":"2025-04-24T22:27:59.6528491+03:00","level":"INFO","msg":"Starting system monitor"}
-{"time":"2025-04-24T22:28:09.6540088+03:00","level":"ERROR","msg":"monitor: disk: error sampling metrics: Incorrect function."}
