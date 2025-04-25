@@ -1,0 +1,7 @@
+GAME OVERstep:111, score: 40, best score: 0, loss: 1.558127999305725, reward:00
+epoch: 0 loss: 1.5581280 LR: [0.001] step: 112 score: 40 best_score: 40
+epoch: 1 loss: 0.0292319 LR: [0.001] step: 121 score: 120 best_score: 407, reward:0
+epoch: 2 loss: 4.3315144 LR: [0.001] step: 26 score: 70 best_score: 40reward:0010
+GAME OVERstep:89, score: 100, best score: 40, loss: 0.22249113023281097, reward:0
+epoch: 3 loss: 0.2224911 LR: [0.001] step: 90 score: 100 best_score: 100
+epoch: 4,step:19, score: 90, best score: 100, loss: 6.294260025024414, reward:10

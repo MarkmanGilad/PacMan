@@ -1,0 +1,17 @@
+{"time":"2025-04-24T22:51:27.9826691+03:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-04-24T22:51:27.9826691+03:00","level":"INFO","msg":"created symlink","path":"C:\\Users\\Gilad\\Markman Dropbox\\Gilad Markman\\Python\\PacMan\\PacMan\\wandb\\run-20250424_225127-PacMan18\\logs\\debug-core.log"}
+{"time":"2025-04-24T22:51:28.1074613+03:00","level":"INFO","msg":"created new stream","id":"PacMan18"}
+{"time":"2025-04-24T22:51:28.1074613+03:00","level":"INFO","msg":"stream: started","id":"PacMan18"}
+{"time":"2025-04-24T22:51:28.1082175+03:00","level":"INFO","msg":"sender: started","stream_id":"PacMan18"}
+{"time":"2025-04-24T22:51:28.1074613+03:00","level":"INFO","msg":"handler: started","stream_id":"PacMan18"}
+{"time":"2025-04-24T22:51:28.1082175+03:00","level":"INFO","msg":"writer: Do: started","stream_id":"PacMan18"}
+{"time":"2025-04-24T22:51:28.6407494+03:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-24T22:51:38.6410667+03:00","level":"ERROR","msg":"monitor: disk: error sampling metrics: Incorrect function."}
+{"time":"2025-04-25T01:50:57.667522+03:00","level":"INFO","msg":"stream: closing","id":"PacMan18"}
+{"time":"2025-04-25T01:50:57.667522+03:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-04-25T01:50:57.6682423+03:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-04-25T01:51:04.1982861+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-04-25T01:51:08.4202924+03:00","level":"INFO","msg":"handler: closed","stream_id":"PacMan18"}
+{"time":"2025-04-25T01:51:08.4202924+03:00","level":"INFO","msg":"sender: closed","stream_id":"PacMan18"}
+{"time":"2025-04-25T01:51:08.4202924+03:00","level":"INFO","msg":"writer: Close: closed","stream_id":"PacMan18"}
+{"time":"2025-04-25T01:51:08.4202924+03:00","level":"INFO","msg":"stream: closed","id":"PacMan18"}

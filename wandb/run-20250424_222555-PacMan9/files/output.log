@@ -1,0 +1,13 @@
+GAME OVER
+epoch: 0 loss: -1.0000000 LR: [0.001] step: 76 score: 170 best_score: 170
+GAME OVER
+epoch: 1 loss: 5.4641724 LR: [0.001] step: 93 score: 150 best_score: 170
+GAME OVER
+epoch: 2 loss: 4.9077516 LR: [0.001] step: 115 score: 260 best_score: 260
+GAME OVER
+epoch: 3 loss: 3.3730712 LR: [0.001] step: 119 score: 280 best_score: 280
+GAME OVER
+epoch: 4 loss: 15.4079905 LR: [0.001] step: 127 score: 390 best_score: 390
+GAME OVER
+epoch: 5 loss: 9.7590799 LR: [0.001] step: 90 score: 250 best_score: 390
+epoch: 6 loss: 10.5639534 LR: [0.001] step: 26 score: 110 best_score: 390

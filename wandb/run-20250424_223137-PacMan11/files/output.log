@@ -1,0 +1,5 @@
+GAME OVER
+GAME OVER
+chkpt:11 epoch: 0 loss: -1.0000000 LR: [0.001] step: 85 score: 320 best_score: 320
+GAME OVER
+chkpt:11 epoch: 1 loss: 5.4303274 LR: [0.001] step: 86 score: 190 best_score: 320

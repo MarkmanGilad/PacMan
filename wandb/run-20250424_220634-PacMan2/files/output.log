@@ -1,0 +1,16 @@
+GAME OVERstep:116, score: 160, best score: 0, loss: 6.413037300109863, reward:000
+epoch: 0 loss: 6.4130373 LR: [0.001] step: 117 score: 160 best_score: 160
+GAME OVERstep:105, score: 120, best score: 160, loss: 0.06124952435493469, reward:0
+epoch: 1 loss: 0.0612495 LR: [0.001] step: 106 score: 120 best_score: 160
+GAME OVERstep:105, score: 80, best score: 160, loss: 0.3405231237411499, reward:00
+epoch: 2 loss: 0.3405231 LR: [0.001] step: 106 score: 80 best_score: 160
+GAME OVERstep:105, score: 80, best score: 160, loss: 0.31923234462738037, reward:0
+epoch: 3 loss: 0.3192323 LR: [0.001] step: 106 score: 80 best_score: 160
+GAME OVERstep:93, score: 190, best score: 160, loss: 4.0839457511901855, reward:00
+epoch: 4 loss: 4.0839458 LR: [0.001] step: 94 score: 190 best_score: 190
+GAME OVERstep:105, score: 90, best score: 190, loss: 2.3305301666259766, reward:0
+epoch: 5 loss: 2.3305302 LR: [0.001] step: 106 score: 90 best_score: 190
+epoch: 6 loss: 2.4286029 LR: [0.001] step: 20 score: 90 best_score: 190reward:00
+GAME OVERstep:105, score: 100, best score: 190, loss: 1.1493185758590698, reward:0
+epoch: 7 loss: 1.1493186 LR: [0.001] step: 106 score: 100 best_score: 190
+epoch: 8,step:2, score: 20, best score: 190, loss: 2.796074151992798, reward:100

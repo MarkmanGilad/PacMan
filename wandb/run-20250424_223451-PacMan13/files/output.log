@@ -1,0 +1,29 @@
+GAME OVER
+chkpt:13 epoch: 0 loss: -1.0000000 LR: [0.001] step: 77 score: 160 best_score: 160
+GAME OVER
+chkpt:13 epoch: 1 loss: 11.7932091 LR: [0.001] step: 78 score: 240 best_score: 240
+Traceback (most recent call last):
+  File "c:\Users\Gilad\Markman Dropbox\Gilad Markman\Python\PacMan\PacMan\Trainer.py", line 187, in <module>
+    main (chkpt)
+  File "c:\Users\Gilad\Markman Dropbox\Gilad Markman\Python\PacMan\PacMan\Trainer.py", line 120, in main
+    Q_values = player.getActionValues(states)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Gilad\Markman Dropbox\Gilad Markman\Python\PacMan\PacMan\DQN_Agent.py", line 33, in getActionValues
+    Q_values = self.DQN(state)
+               ^^^^^^^^^^^^^^^
+  File "c:\Users\Gilad\Markman Dropbox\Gilad Markman\Python\PacMan\PacMan\DQN.py", line 73, in __call__
+    return self.forward(state)
+           ^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Gilad\Markman Dropbox\Gilad Markman\Python\PacMan\PacMan\DQN.py", line 45, in forward
+    x = self.linear2(x)
+        ^^^^^^^^^^^^^^^
+  File "C:\Users\Gilad\.virtualenvs\Space_Invaders-WdsSLu6i\Lib\site-packages\torch\nn\modules\module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Gilad\.virtualenvs\Space_Invaders-WdsSLu6i\Lib\site-packages\torch\nn\modules\module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Gilad\.virtualenvs\Space_Invaders-WdsSLu6i\Lib\site-packages\torch\nn\modules\linear.py", line 125, in forward
+    return F.linear(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

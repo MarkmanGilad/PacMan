@@ -1,0 +1,10 @@
+{"time":"2025-04-24T22:56:39.4062366+03:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-04-24T22:56:39.4067714+03:00","level":"INFO","msg":"created symlink","path":"C:\\Users\\Gilad\\Markman Dropbox\\Gilad Markman\\Python\\PacMan\\PacMan\\wandb\\run-20250424_225639-PacMan19\\logs\\debug-core.log"}
+{"time":"2025-04-24T22:56:39.5144947+03:00","level":"INFO","msg":"created new stream","id":"PacMan19"}
+{"time":"2025-04-24T22:56:39.5144947+03:00","level":"INFO","msg":"stream: started","id":"PacMan19"}
+{"time":"2025-04-24T22:56:39.5150135+03:00","level":"INFO","msg":"handler: started","stream_id":"PacMan19"}
+{"time":"2025-04-24T22:56:39.5150135+03:00","level":"INFO","msg":"writer: Do: started","stream_id":"PacMan19"}
+{"time":"2025-04-24T22:56:39.5150135+03:00","level":"INFO","msg":"sender: started","stream_id":"PacMan19"}
+{"time":"2025-04-24T22:56:39.8891976+03:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-24T22:56:39.9261699+03:00","level":"ERROR","msg":"error writing metadata file: open C:\\Users\\Gilad\\Markman Dropbox\\Gilad Markman\\Python\\PacMan\\PacMan\\wandb\\run-20250424_225639-PacMan19\\files\\wandb-metadata.json: The requested operation cannot be performed on a file with a user-mapped section open."}
+{"time":"2025-04-24T22:56:49.8898993+03:00","level":"ERROR","msg":"monitor: disk: error sampling metrics: Incorrect function."}
