@@ -29,17 +29,17 @@ def main (chkpt):
     player_hat.DQN = player.DQN.copy()
     batch_size = 32
     buffer = ReplayBuffer()
-    learning_rate = 0.001
-    epochs = 1000
+    learning_rate = 1e-4
+    epochs = 100000
     start_epoch = 0
-    gamma=0.1
-    C = 3
+    gamma=0.5
+    C = 5
     loss = torch.tensor(-1,dtype=torch.float32,requires_grad=True)
     avg = 0
     scores, losses, avg_score = [], [], []
     optim = torch.optim.Adam(player.DQN.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.StepLR(optim,100000, gamma=0.50)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[5000*1000, 10000*1000, 15000*1000], gamma=gamma)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optim,[1000*200, 2000*200, 5000*2000], gamma=gamma)
     step = 0
     #endregion
     #region   ############# wandb init ###########################
@@ -95,18 +95,25 @@ def main (chkpt):
             if gameTick%6==0:
                 step+=1
                 action, state_cnn = player.getAction(state_cnn=state_cnn, epoch=epoch,train=True)
-                graphics.Graphics.game_screen(screen,game)
                 gameTick,nextState,reward=game.tick(gameTick, action)
                 buffer.push(state_cnn, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
                             nextState, torch.tensor(game.game_over!=False, dtype=torch.float32))
+                graphics.Graphics.game_screen(screen,game)
+                pygame.display.update()
+                i = 1
             else:
-                gameTick,midState_cnn,_=game.tick(gameTick,action)
+                gameTick,midState_cnn,_reward=game.tick(gameTick,action)
+                reward += _reward
                 graphics.Graphics.game_screen(screen,game)
 
             if game.game_over or step > 200:
                 best_score = max(best_score, game.points)
+                if game.game_over == 'lose':
+                    reward = game.lose_reward
+                elif game.game_over == 'win':
+                    reward = game.win_reward
                 buffer.push(state, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
-                            midState_cnn, torch.tensor(game.game_over!=False, dtype=torch.float32))
+                            midState_cnn, torch.tensor(game.game_over=='lose', dtype=torch.float32))
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
                 break

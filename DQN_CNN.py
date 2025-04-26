@@ -13,15 +13,15 @@ import environment
 input_size = 873 # state: board = 28 * 31 = 868 + direction = 1 = 869 + 4 GhostDirections
 
 output_size = 4 # V(state)
-gamma = 0.99 
+gamma = 0.95 
 
 # epsilon Greedy
 epsilon_start = 1
 epsilon_final = 0.01
-epsilon_decay = 10
+epsilon_decay = 100
 
 class DQN (nn.Module):
-    def __init__(self, input_channels: int = 4, row: int = 31, col: int= 28, device = torch.device('cpu')) -> None:
+    def __init__(self, input_channels: int = 3, row: int = 31, col: int= 28, device = torch.device('cpu')) -> None:
         super().__init__()
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

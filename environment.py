@@ -51,7 +51,24 @@ class Game:
         self.frightenedTime=0
         self.game_over = False
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+        self.init_rewards()
+
+    def init_pacman (self):
+        default =(23, 14)
+        locations = [default, (1, 10), (1, 17), (5, 7), (5, 15), (29,8), (29,22), (26, 5), (26, 12), (26, 26), (23, 14)]
+        new_locatiom = random.choice(locations)
+        self.board[default] = 1
+        self.board[new_locatiom] = 11
+
+    def init_rewards (self):
+        self.reward = 0
+        self.food_reward = 1
+        self.ball_reward = 5
+        self.step_reward = -0.1
+        self.ghost_eat_reward = 10
+        self.lose_reward = -20
+        self.win_reward = 20
+
     def move(self):
         if 11 in self.board:
             i,j=np.argwhere(self.board == 11)[0]
@@ -78,6 +95,7 @@ class Game:
                 nextPos = (i-1,j)
             if self.board[nextPos[0]][nextPos[1]]!=-1 and self.board[nextPos[0]][nextPos[1]]!=-2:
                 if self.board[nextPos[0]][nextPos[1]]>6:
+                    self.reward += self.lose_reward
                     self.gameOver()
                     return
                 if self.board[nextPos[0]][nextPos[1]]<-6:
@@ -86,10 +104,14 @@ class Game:
                 self.board[i][j] = 0
                 if self.board[nextPos[0]][nextPos[1]]==1:
                     self.points+=10
-                if self.board[nextPos[0]][nextPos[1]]==5:
+                    self.reward += self.food_reward
+                elif self.board[nextPos[0]][nextPos[1]]==5:
                     self.points+=50
+                    self.reward +=self.ball_reward
                     self.ghostModes=[2,2,2,2]
                     self.frightenedTime=0
+                else:
+                    self.reward += self.step_reward
                 self.board[nextPos[0]][nextPos[1]]=11
                 
     def ghostModeUpdate(self):
@@ -263,6 +285,7 @@ class Game:
     def respawnGhost(self,ghost,pos):
         self.board[13,14] = 10-ghost
         self.points+=200
+        self.reward += self.ghost_eat_reward
         self.ghostDirections[ghost]=3
         if self.waveCounter%2==0:
             self.ghostModes[ghost]=1
@@ -286,11 +309,14 @@ class Game:
             prevPoints = self.points
             if 11 not in self.board:
                 self.gameOver()
+                self.reward += self.lose_reward
             if (1 not in self.board and 5 not in self.board) and (1 not in self.ghostUnder and 5 not in self.ghostUnder):
                 self.win()
-            if action is not None:
-                self.nextDirection = action
+                self.reward += self.win_reward
+            
             if GameTick%6==0:
+                if action is not None:
+                    self.nextDirection = action
                 self.move()
             if GameTick%8==0:
                 self.ghostMove(0)
@@ -298,8 +324,9 @@ class Game:
                 self.blueGhostMove(0)
             if GameTick%60==0:
                 self.ghostModeUpdate()
-            
-            reward=(self.points-prevPoints)/10
+            reward = self.reward
+            self.reward = 0
+            # reward=(self.points-prevPoints)/10
             return GameTick+1,self.state_cnn(),reward        ##################
         return GameTick
 
@@ -314,20 +341,21 @@ class Game:
         
     def state_cnn(self):
         board = np.zeros_like(self.board)
-        board[self.board==5] = 3  # ball 5 -> 3
-        board[self.board==1] = 2  # food 1 -> 2
-        board[self.board==0] = 1  # empty 0 -> 1
-        board[(self.board==-1) | (self.board==-2)] = 0  # wall -1, -2 -> 0
+        board[self.board==5] = 2  # ball 5 -> 3
+        board[self.board==1] = 1  # food 1 -> 2
+        board[self.board==0] = 0  # empty 0 -> 1
+        board[(self.board==-1) | (self.board==-2)] = -1  # wall -1, -2 -> 0
 
         pacman = np.zeros_like(self.board)
-        pacman[self.board==11] = 1
+        pacman[self.board==11] = 10
 
-        ghost_bad = np.zeros_like(self.board)
-        ghost_bad[(self.board >=7) &  (self.board <= 10) ] = 1 # add the direction - next tiel with 0.1
+        ghost = np.zeros_like(self.board)
+        ghost[(self.board >=7) &  (self.board <= 10) ] = -5 # bad_ghost
+        ghost[(self.board>= -10) & (self.board <= -7)] = 5 # eatable ghost
         
-        ghost_eatable = np.zeros_like(self.board) 
-        ghost_eatable[(self.board>= -10) & (self.board <= -7)] = 1 # add the direction - next tiel with 0.1
-        state = np.stack([board, pacman, ghost_bad, ghost_eatable], axis=0)  
+        # ghost_eatable = np.zeros_like(self.board) 
+        # ghost_eatable[(self.board>= -10) & (self.board <= -7)] = 1 # add the direction - next tiel with 0.1
+        state = np.stack([board, pacman, ghost], axis=0)  
         return torch.tensor(state, dtype=torch.float32, device=self.device)
         
         
@@ -335,8 +363,8 @@ class Game:
         actions, next_pacman_lst = self.legal_actions(state_cnn)
         batch = []
         for next_pacman in next_pacman_lst:
-            state = torch.stack([state_cnn[0], next_pacman, state_cnn[1], state_cnn[2]], axis=0) 
-            batch.append(torch.tensor(state, dtype=torch.float32))
+            state = torch.stack([state_cnn[0], next_pacman, state_cnn[2]], axis=0) 
+            batch.append(state)
         
         batch_state = torch.stack(batch, axis=0)
         return batch_state, actions
@@ -345,28 +373,28 @@ class Game:
         board = state_cnn[0]
         pacman = state_cnn[1]
         rows, cols = pacman.shape
-        row, col = torch.where(pacman == 1)
+        row, col = torch.where(pacman == 10)
         legal_actions = []
         next_pacman_lst = []
         for action in range(4):
             if action == 0 and col + 1 < cols and board[row, col+1] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row, col+1] = 1
+                next_pacman[row, col+1] = 10
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 1 and row + 1 < rows and board[row+1, col] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row+1, col] = 1
+                next_pacman[row+1, col] = 10
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 2 and col - 1 >= 0 and board[row, col-1] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row, col-1] = 1
+                next_pacman[row, col-1] = 10
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 3 and row - 1 >= 0 and board[row-1, col] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row-1, col] = 1
+                next_pacman[row-1, col] = 10
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
 
@@ -418,6 +446,8 @@ class Game:
         self.waveTime=0
         self.frightenedTime=0
         self.game_over = False
+        self.reward = 0
+        self.init_pacman()
     
                 
                             
