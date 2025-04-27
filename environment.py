@@ -103,7 +103,6 @@ class Game:
                     return
                 if self.board[nextPos[0]][nextPos[1]]<-6:
                     self.respawnGhost(self.board[nextPos[0]][nextPos[1]]+10,nextPos)
-                        
                 self.board[i][j] = 0
                 if self.board[nextPos[0]][nextPos[1]]==1:
                     self.points+=10
@@ -116,7 +115,8 @@ class Game:
                 else:
                     self.reward += self.step_reward
                 self.board[nextPos[0]][nextPos[1]]=11
-                
+
+
     def ghostModeUpdate(self):
         if self.waveCounter%2==0:
             mode=1
@@ -353,7 +353,7 @@ class Game:
         board[(self.board==-1) | (self.board==-2)] = -1  # wall -1, -2 -> 0
 
         pacman = np.zeros_like(self.board)
-        pacman[self.board==11] = self.prev_action + 10
+        pacman[self.board==11] = self.direction + 10
 
         ghost = np.zeros_like(self.board)
         ghost[(self.board >=7) &  (self.board <= 10) ] = -5 # bad_ghost
@@ -388,22 +388,22 @@ class Game:
         for action in range(4):
             if action == 0 and col + 1 < cols and board[row, col+1] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row, col+1] = 10 + action
+                next_pacman[row, col+1] = 10 + self.direction
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 1 and row + 1 < rows and board[row+1, col] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row+1, col] = 10 + action
+                next_pacman[row+1, col] = 10 + self.direction
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 2 and col - 1 >= 0 and board[row, col-1] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row, col-1] = 10 + action
+                next_pacman[row, col-1] = 10 + self.direction
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 3 and row - 1 >= 0 and board[row-1, col] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row-1, col] = 10 + action
+                next_pacman[row-1, col] = 10 + self.direction
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
 
@@ -413,7 +413,16 @@ class Game:
         row, col = torch.where(state_cnn[1] >= 10)
         row = row.item() + n
         col = col.item() + n
-        state_padded = F.pad(state_cnn, (n, n, n, n), mode='constant', value=-1)
+        pad = (n, n, n, n)
+
+        # Pad each channel separately
+        padded_channels = []
+        for i in range(3):
+            padded = F.pad(state_cnn[i].unsqueeze(0), pad, mode='circular')
+            padded_channels.append(padded)
+
+        # Stack channels back
+        state_padded = torch.cat(padded_channels, dim=0)
         
         sub_state = state_padded[:, row-n:row+n+1, col-n:col+n+1]
 

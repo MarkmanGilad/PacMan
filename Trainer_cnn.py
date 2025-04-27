@@ -94,9 +94,9 @@ def main (chkpt):
             ############## Sample Environement #########################
             if gameTick%6==0:
                 step+=1
-                action, state_cnn = player.getAction(state_cnn=state_cnn, epoch=epoch,train=True)
+                action, state_action = player.getAction(state_cnn=state_cnn, epoch=epoch,train=True)
                 gameTick,nextState,reward=game.tick(gameTick, action)
-                buffer.push(state_cnn, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
+                buffer.push(state_action, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
                             nextState, torch.tensor(game.game_over!=False, dtype=torch.float32))
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
@@ -112,12 +112,12 @@ def main (chkpt):
                     reward = game.lose_reward
                 elif game.game_over == 'win':
                     reward = game.win_reward
-                buffer.push(state, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
+                buffer.push(state_action, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
                             midState_cnn, torch.tensor(game.game_over=='lose', dtype=torch.float32))
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
                 break
-            state = nextState
+            state_cnn = nextState
 
             pygame.display.update()
             clock.tick(1000)
@@ -127,8 +127,8 @@ def main (chkpt):
     
             ############## Train ################
             if gameTick%6==0:
-                states_cnn, actions, rewards, next_states, dones = buffer.sample(batch_size)
-                Q_values = player.get_Q_values(states_cnn)
+                states_action, actions, rewards, next_states, dones = buffer.sample(batch_size)
+                Q_values = player.get_Q_values(states_action)
                 
                 Q_hat_Values = player_hat.get_Action_Values(next_states)   
                 
