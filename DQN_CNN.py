@@ -27,7 +27,7 @@ class DQN (nn.Module):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = device
         
-        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=3, padding=1)  
+        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=5, padding=2)  
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1) 
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1) 
         self.MSELoss = nn.MSELoss()

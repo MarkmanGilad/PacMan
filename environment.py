@@ -62,12 +62,13 @@ class Game:
 
     def init_rewards (self):
         self.reward = 0
-        self.food_reward = 1
-        self.ball_reward = 5
-        self.step_reward = -0.1
-        self.ghost_eat_reward = 10
-        self.lose_reward = -20
-        self.win_reward = 20
+        self.food_reward = 3
+        self.ball_reward = 10
+        self.step_reward = -0.3
+        self.ghost_eat_reward = 20
+        self.lose_reward = -100
+        self.win_reward = 200
+        self.reverse_reward = -0.2
 
     def move(self):
         if 11 in self.board:
@@ -316,6 +317,8 @@ class Game:
             
             if GameTick%6==0:
                 if action is not None:
+                    if self.nextDirection != action:
+                        self.reward +- self.reverse_reward
                     self.nextDirection = action
                 self.move()
             if GameTick%8==0:
