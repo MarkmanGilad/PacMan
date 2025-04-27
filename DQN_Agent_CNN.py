@@ -9,8 +9,9 @@ class DQN_Agent:
         self.train=train
         self.env =env
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.DQN : DQN = DQN(device=self.device)
+        self.DQN : DQN = DQN(device=self.device, row=9, col=9)
         
+        self.last_action_step = 0
 
     def setTrainMode (self):
           if self.train:
@@ -21,14 +22,32 @@ class DQN_Agent:
     def getAction(self, state_cnn, epoch = 0, events= None, train =True): 
         
         states_cnn, actions = self.env.state_actions(state_cnn)
-        
+        if self.env.prev_action == 0:
+            opposite = 2
+        elif self.env.prev_action == 1:
+            opposite = 3
+        elif self.env.prev_action == 2:
+            opposite = 0
+        else:
+            opposite = 1
+
         if train:
             epsilon = self.DQN.epsilon_greedy(epoch)
             rnd = random.random()
             if rnd < epsilon:
+                if self.last_action_step < 5 and len(actions) > 1 and opposite in actions:
+                    idx = actions.index(opposite) 
+                    actions.pop(idx)
+                    state_cnn = torch.cat([states_cnn[:idx], states_cnn[idx+1:]])
+                    
+                if self.last_action_step == 5:
+                    self.last_action_step = 0
                 idx = random.randrange(len(actions))
                 action = actions[idx]
                 state_cnn = states_cnn[idx]
+                self.env.prev_action = action
+                self.last_action_step += 1  
+                
                 return action, state_cnn
         
         with torch.no_grad():

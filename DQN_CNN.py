@@ -18,7 +18,7 @@ gamma = 0.95
 # epsilon Greedy
 epsilon_start = 1
 epsilon_final = 0.01
-epsilon_decay = 100
+epsilon_decay = 10
 
 class DQN (nn.Module):
     def __init__(self, input_channels: int = 3, row: int = 31, col: int= 28, device = torch.device('cpu')) -> None:
@@ -27,9 +27,9 @@ class DQN (nn.Module):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = device
         
-        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=5, padding=2)  
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1) 
-        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1) 
+        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=8, kernel_size=3, padding=1)  
+        self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1) 
+        # self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1) 
         self.MSELoss = nn.MSELoss()
 
         # Dynamically calculate flattened size
@@ -41,14 +41,14 @@ class DQN (nn.Module):
             dummy = F.relu(dummy)
             self.flattened_size = dummy.view(1, -1).shape[1]
 
-        self.fc1 = nn.Linear(self.flattened_size, 128)
-        self.output = nn.Linear(128, 1)
+        self.fc1 = nn.Linear(self.flattened_size, 64)
+        self.output = nn.Linear(64, 1)
         self.to(self.device)
     
     def forward(self, x):
         x = F.relu(self.conv1(x))         # [B, 32, H, W]
         x = F.relu(self.conv2(x))         # [B, 64, H, W]
-        x = F.relu(self.conv3(x))         # [B, 64, H, W]
+        # x = F.relu(self.conv3(x))         # [B, 64, H, W]
         x = x.view(x.size(0), -1)         # Flatten to [B, *]
         x = F.relu(self.fc1(x))           # [B, 128]
         return self.output(x)             # [B, 1]

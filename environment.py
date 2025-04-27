@@ -2,6 +2,7 @@ import numpy as np
 import math
 import random
 import torch
+import torch.nn.functional as F
 
 class Game:
     def __init__(self):
@@ -52,6 +53,7 @@ class Game:
         self.game_over = False
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.init_rewards()
+        self.prev_action = 0
 
     def init_pacman (self):
         default =(23, 14)
@@ -66,9 +68,9 @@ class Game:
         self.ball_reward = 10
         self.step_reward = -0.3
         self.ghost_eat_reward = 20
-        self.lose_reward = -100
-        self.win_reward = 200
-        self.reverse_reward = -0.2
+        self.lose_reward = -50
+        self.win_reward = 50
+        self.reverse_reward = -1
 
     def move(self):
         if 11 in self.board:
@@ -317,9 +319,10 @@ class Game:
             
             if GameTick%6==0:
                 if action is not None:
-                    if self.nextDirection != action:
-                        self.reward +- self.reverse_reward
+                    if abs (self.nextDirection - action) == 2:
+                        self.reward =+ self.reverse_reward
                     self.nextDirection = action
+                    
                 self.move()
             if GameTick%8==0:
                 self.ghostMove(0)
@@ -350,7 +353,7 @@ class Game:
         board[(self.board==-1) | (self.board==-2)] = -1  # wall -1, -2 -> 0
 
         pacman = np.zeros_like(self.board)
-        pacman[self.board==11] = 10
+        pacman[self.board==11] = self.prev_action + 10
 
         ghost = np.zeros_like(self.board)
         ghost[(self.board >=7) &  (self.board <= 10) ] = -5 # bad_ghost
@@ -359,7 +362,8 @@ class Game:
         # ghost_eatable = np.zeros_like(self.board) 
         # ghost_eatable[(self.board>= -10) & (self.board <= -7)] = 1 # add the direction - next tiel with 0.1
         state = np.stack([board, pacman, ghost], axis=0)  
-        return torch.tensor(state, dtype=torch.float32, device=self.device)
+        state = torch.tensor(state, dtype=torch.float32, device=self.device)
+        return self.get_sub_state(state)
         
         
     def state_actions (self, state_cnn):
@@ -376,33 +380,45 @@ class Game:
         board = state_cnn[0]
         pacman = state_cnn[1]
         rows, cols = pacman.shape
-        row, col = torch.where(pacman == 10)
+        row, col = torch.where(pacman >= 10)
+        row = row.item()
+        col = col.item()
         legal_actions = []
         next_pacman_lst = []
         for action in range(4):
             if action == 0 and col + 1 < cols and board[row, col+1] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row, col+1] = 10
+                next_pacman[row, col+1] = 10 + action
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 1 and row + 1 < rows and board[row+1, col] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row+1, col] = 10
+                next_pacman[row+1, col] = 10 + action
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 2 and col - 1 >= 0 and board[row, col-1] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row, col-1] = 10
+                next_pacman[row, col-1] = 10 + action
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
             elif action == 3 and row - 1 >= 0 and board[row-1, col] != -1:
                 next_pacman = torch.zeros_like(pacman)
-                next_pacman[row-1, col] = 10
+                next_pacman[row-1, col] = 10 + action
                 legal_actions.append(action)
                 next_pacman_lst.append(next_pacman)
 
         return legal_actions, next_pacman_lst
+
+    def get_sub_state (self, state_cnn, n=4):
+        row, col = torch.where(state_cnn[1] >= 10)
+        row = row.item() + n
+        col = col.item() + n
+        state_padded = F.pad(state_cnn, (n, n, n, n), mode='constant', value=-1)
         
+        sub_state = state_padded[:, row-n:row+n+1, col-n:col+n+1]
+
+        return sub_state
+
                 
     def reset (self):
         self.ghostHomeTiles = [(1,26),(1,1),(29,26),(29,1)]
