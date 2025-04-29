@@ -21,7 +21,7 @@ epsilon_final = 0.01
 epsilon_decay = 10
 
 class DQN (nn.Module):
-    def __init__(self, input_channels: int = 3, row: int = 31, col: int= 28, device = torch.device('cpu')) -> None:
+    def __init__(self, input_channels: int = 1, row: int = 9, col: int= 9, device = None) -> None:
         super().__init__()
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

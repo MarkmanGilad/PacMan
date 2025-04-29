@@ -1,7 +1,7 @@
 import pygame
 import torch
 from environment import Game
-from DQN_Agent_CNN import DQN_Agent
+from DQN_Agent import DQN_Agent
 import graphics
 import os
 from ReplayBuffer import ReplayBuffer
@@ -94,17 +94,17 @@ def main (chkpt):
             ############## Sample Environement #########################
             if gameTick%6==0:
                 step+=1
-                action, state_action = player.getAction(state_cnn=state_cnn, epoch=epoch,train=True)
+                action = player.getAction(state=state_cnn, epoch=epoch,train=True)
                 gameTick,nextState,reward=game.tick(gameTick, action)
-                buffer.push(state_action, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
+                buffer.push(state_cnn, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
                             nextState, torch.tensor(game.game_over!=False, dtype=torch.float32))
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
-                i = 1
             else:
-                gameTick,midState_cnn,_reward=game.tick(gameTick,action)
+                gameTick,next_state,_reward=game.tick(gameTick,action)
                 reward += _reward
                 graphics.Graphics.game_screen(screen,game)
+                pygame.display.update()
 
             if game.game_over or step > 200:
                 best_score = max(best_score, game.points)
@@ -112,8 +112,8 @@ def main (chkpt):
                     reward = game.lose_reward
                 elif game.game_over == 'win':
                     reward = game.win_reward
-                buffer.push(state_action, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
-                            midState_cnn, torch.tensor(game.game_over=='lose', dtype=torch.float32))
+                buffer.push(state_cnn, torch.tensor(action, dtype=torch.int64), torch.tensor(reward, dtype=torch.float32), 
+                            next_state, torch.tensor(game.game_over=='lose', dtype=torch.float32))
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
                 break
@@ -127,10 +127,10 @@ def main (chkpt):
     
             ############## Train ################
             if gameTick%6==0:
-                states_action, actions, rewards, next_states, dones = buffer.sample(batch_size)
-                Q_values = player.get_Q_values(states_action)
+                states, actions, rewards, next_states, dones = buffer.sample(batch_size)
+                Q_values = player.get_action_values(states, actions)
                 
-                Q_hat_Values = player_hat.get_Action_Values(next_states)   
+                Q_hat_Values, next_actions = player_hat.get_max_action_value(next_states)   
                 
                 loss = player.DQN.loss(Q_values, rewards, Q_hat_Values, dones)
 

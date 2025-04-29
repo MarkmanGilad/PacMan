@@ -29,7 +29,7 @@ class DQN (nn.Module):
     def __init__(self) -> None:
         super().__init__()
         if torch.cuda.is_available:
-            self.device = torch.device('cpu') # 'cuda'
+            self.device = torch.device('cuda') 
         else:
             self.device = torch.device('cpu')
         
@@ -38,6 +38,7 @@ class DQN (nn.Module):
         self.linear3 = nn.Linear(layer2, layer3, device=self.device)
         self.linear4 = nn.Linear(layer3, layer4, device=self.device)
         self.output = nn.Linear(layer4, output_size, device=self.device)
+        self.to(device=self.device)
         
     def forward (self, x):
         x = self.linear1(x)

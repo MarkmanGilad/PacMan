@@ -319,8 +319,8 @@ class Game:
             
             if GameTick%6==0:
                 if action is not None:
-                    if abs (self.nextDirection - action) == 2:
-                        self.reward =+ self.reverse_reward
+                    # if abs (self.nextDirection - action) == 2:
+                    #     self.reward =+ self.reverse_reward
                     self.nextDirection = action
                     
                 self.move()
@@ -346,7 +346,7 @@ class Game:
         return torch.tensor(state,dtype=torch.float32)
         
     def state_cnn(self):
-        board = np.zeros_like(self.board)
+        board = np.zeros_like(self.board, dtype=float)
         board[(self.board==-1) | (self.board==-2)] = -0.1  # wall -1, -2 -> -1
         board[self.board==0] = 0  # empty 0 -> 0
         board[self.board==1] = 0.1  # food 1 -> 1
@@ -414,7 +414,7 @@ class Game:
         return legal_actions, next_pacman_lst
 
     def get_sub_state (self, state_cnn, n=4):
-        row, col = torch.where(state_cnn == 1) # pac man position
+        row, col = torch.where(state_cnn.squeeze() == 1) # pac man position
         row = row.item() + n
         col = col.item() + n
         pad = (n, n, n, n)
