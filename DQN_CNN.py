@@ -42,7 +42,7 @@ class DQN (nn.Module):
             self.flattened_size = dummy.view(1, -1).shape[1]
 
         self.fc1 = nn.Linear(self.flattened_size, 64)
-        self.output = nn.Linear(64, 1)
+        self.output = nn.Linear(64, 4)      # four actions
         self.to(self.device)
     
     def forward(self, x):
@@ -58,7 +58,8 @@ class DQN (nn.Module):
         return self.MSELoss(Q_value, Q_new)
 
     def epsilon_greedy(self, epoch, start = epsilon_start, final=epsilon_final, decay=epsilon_decay):
-        res = final + (start - final) * math.exp(-1 * epoch/decay)
+        # res = final + (start - final) * math.exp(-1 * epoch/decay)
+        res = max(final, start - (start - final) * (epoch / decay))
         return res
     
     def load_params(self, path):

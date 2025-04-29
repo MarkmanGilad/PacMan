@@ -347,22 +347,26 @@ class Game:
         
     def state_cnn(self):
         board = np.zeros_like(self.board)
-        board[self.board==5] = 2  # ball 5 -> 3
-        board[self.board==1] = 1  # food 1 -> 2
-        board[self.board==0] = 0  # empty 0 -> 1
-        board[(self.board==-1) | (self.board==-2)] = -1  # wall -1, -2 -> 0
+        board[(self.board==-1) | (self.board==-2)] = -0.1  # wall -1, -2 -> -1
+        board[self.board==0] = 0  # empty 0 -> 0
+        board[self.board==1] = 0.1  # food 1 -> 1
+        board[self.board==5] = 0.2  # ball 5 -> 2
+        board[(self.board >=7) &  (self.board <= 10) ] = -0.5 # bad_ghost
+        board[(self.board>= -10) & (self.board <= -7)] = 0.5 # eatable ghost
+        board[self.board==11] = 1  # pac man 11 -> 10        
+        
+        # pacman = np.zeros_like(self.board)
+        # pacman[self.board==11] = self.direction + 10
 
-        pacman = np.zeros_like(self.board)
-        pacman[self.board==11] = self.direction + 10
-
-        ghost = np.zeros_like(self.board)
-        ghost[(self.board >=7) &  (self.board <= 10) ] = -5 # bad_ghost
-        ghost[(self.board>= -10) & (self.board <= -7)] = 5 # eatable ghost
+        # ghost = np.zeros_like(self.board)
+        # ghost[(self.board >=7) &  (self.board <= 10) ] = -5 # bad_ghost
+        # ghost[(self.board>= -10) & (self.board <= -7)] = 5 # eatable ghost
         
         # ghost_eatable = np.zeros_like(self.board) 
         # ghost_eatable[(self.board>= -10) & (self.board <= -7)] = 1 # add the direction - next tiel with 0.1
-        state = np.stack([board, pacman, ghost], axis=0)  
-        state = torch.tensor(state, dtype=torch.float32, device=self.device)
+        # state = np.stack([board, pacman, ghost], axis=0)  
+        state = torch.tensor(board, dtype=torch.float32, device=self.device)
+        state = state.unsqueeze(0)
         return self.get_sub_state(state)
         
         
@@ -410,21 +414,14 @@ class Game:
         return legal_actions, next_pacman_lst
 
     def get_sub_state (self, state_cnn, n=4):
-        row, col = torch.where(state_cnn[1] >= 10)
+        row, col = torch.where(state_cnn == 1) # pac man position
         row = row.item() + n
         col = col.item() + n
         pad = (n, n, n, n)
 
-        # Pad each channel separately
-        padded_channels = []
-        for i in range(3):
-            padded = F.pad(state_cnn[i].unsqueeze(0), pad, mode='circular')
-            padded_channels.append(padded)
-
-        # Stack channels back
-        state_padded = torch.cat(padded_channels, dim=0)
-        
-        sub_state = state_padded[:, row-n:row+n+1, col-n:col+n+1]
+        # Pad the board
+        padded = F.pad(state_cnn, pad, mode='circular')
+        sub_state = padded[:, row-n:row+n+1, col-n:col+n+1]
 
         return sub_state
 
