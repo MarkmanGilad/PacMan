@@ -70,7 +70,7 @@ class Game:
         self.ghost_eat_reward = 20
         self.lose_reward = -50
         self.win_reward = 50
-        self.reverse_reward = -1
+        self.reverse_reward = 0
 
     def move(self):
         if 11 in self.board:

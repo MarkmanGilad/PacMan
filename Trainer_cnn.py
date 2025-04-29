@@ -106,7 +106,7 @@ def main (chkpt):
                 graphics.Graphics.game_screen(screen,game)
                 pygame.display.update()
 
-            if game.game_over or step > 200:
+            if game.game_over or step > 300:
                 best_score = max(best_score, game.points)
                 if game.game_over == 'lose':
                     reward = game.lose_reward
